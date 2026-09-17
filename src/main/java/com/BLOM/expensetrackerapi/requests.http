@@ -1,0 +1,394 @@
+@url = http://localhost:8080/api/v1
+
+
+### =========================================================
+### 1. REGISTER USER
+### Run only when creating a new user
+### =========================================================
+
+POST {{url}}/register
+Content-Type: application/json
+
+{
+  "name": "Jane",
+  "email": "jn@gmail.com",
+  "password": "jnjnjn",
+  "age": 22
+}
+
+
+### =========================================================
+### 2. LOGIN
+### Automatically saves JWT as {{authToken}}
+### =========================================================
+
+POST {{url}}/login
+Content-Type: application/json
+
+{
+  "email": "jn@gmail.com",
+  "password": "jnjnjn"
+}
+
+> {%
+    client.global.set("authToken", response.body.jwtToken);
+%}
+
+
+### =========================================================
+### 3. GET PROFILE
+### =========================================================
+
+GET {{url}}/profile
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 4. UPDATE PROFILE
+### =========================================================
+
+PUT {{url}}/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Jane Updated",
+  "email": "jn@gmail.com",
+  "age": 22
+}
+
+
+### =========================================================
+### 5. CREATE CATEGORY
+### Create categories BEFORE expenses
+### =========================================================
+
+POST {{url}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "SHOPPING",
+  "description": "Movies and shopping",
+  "icon": "icon3"
+}
+
+
+### =========================================================
+### 6. CREATE ANOTHER CATEGORY
+### =========================================================
+
+POST {{url}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Transport",
+  "description": "Transport and travel expenses",
+  "icon": "transport-icon"
+}
+
+
+### =========================================================
+### 7. GET ALL CATEGORIES
+### Copy a categoryId from the response
+### and use it when creating expenses
+### =========================================================
+
+GET {{url}}/categories
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 8. CREATE EXPENSE
+### Replace categoryId with a real category UUID
+### =========================================================
+
+POST {{url}}/expenses
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Lunch",
+  "description": "Lunch expense",
+  "amount": 12.50,
+  "categoryId": "9e3f31af-c550-4f6a-b6fe-b1b4ab7d98d2",
+  "date": "2026-09-08"
+}
+
+
+### =========================================================
+### 9. CREATE ANOTHER EXPENSE
+### Replace categoryId with a real category UUID
+### =========================================================
+
+POST {{url}}/expenses
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Coffee",
+  "description": "Morning coffee",
+  "amount": 3.50,
+  "categoryId": "9e3f31af-c550-4f6a-b6fe-b1b4ab7d98d2",
+  "date": "2026-09-08"
+}
+
+
+### =========================================================
+### 10. GET ALL EXPENSES
+### =========================================================
+
+GET {{url}}/expenses
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 11. GET EXPENSES WITH PAGINATION
+### Page starts at 0
+### =========================================================
+
+GET {{url}}/expenses?page=0&size=3
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 12. GET EXPENSE BY UUID
+### Replace with a real expenseId
+### =========================================================
+
+GET {{url}}/expenses/88b6f487-9d23-4113-82b3-3bf7f38cc703
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 13. FILTER EXPENSES BY CATEGORY
+### Uses category NAME, not categoryId
+### =========================================================
+
+GET {{url}}/expenses/category?category=SHOPPING
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 14. FILTER EXPENSES BY NAME
+### =========================================================
+
+GET {{url}}/expenses/name?keyword=Lunch
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 15. FILTER EXPENSES BY DATE
+### =========================================================
+
+GET {{url}}/expenses/date?startDate=2026-09-01&endDate=2026-09-10
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 16. FILTER EXPENSES FROM START DATE ONLY
+### =========================================================
+
+GET {{url}}/expenses/date?startDate=2026-09-01
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 17. FILTER EXPENSES UP TO END DATE ONLY
+### =========================================================
+
+GET {{url}}/expenses/date?endDate=2026-09-10
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 18. UPDATE EXPENSE
+### Replace expenseId and categoryId with real UUIDs
+### =========================================================
+
+PUT {{url}}/expenses/88b6f487-9d23-4113-82b3-3bf7f38cc703
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Lunch Updated",
+  "description": "Updated lunch expense",
+  "amount": 21.00,
+  "categoryId": "dbccd0b4-e75e-45d9-9fe2-a4a04821c2ee",
+  "date": "2026-09-09"
+}
+
+
+### =========================================================
+### 19. DELETE EXPENSE
+### Replace with real expenseId UUID
+### =========================================================
+
+DELETE {{url}}/expenses?id=3b542731-3e85-4090-b16f-f2e78893f4fb
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 20. TEST DELETED EXPENSE
+### Should return NOT FOUND
+### =========================================================
+
+GET {{url}}/expenses/3b542731-3e85-4090-b16f-f2e78893f4fb
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 21. DELETE CATEGORY
+### Replace with actual categoryId UUID
+### =========================================================
+
+DELETE {{url}}/categories/491d1ab8-ec9b-462a-8701-826979ae6b29
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 22. LOGOUT
+### Adds current JWT to blacklist
+### Run near the end because token becomes unusable
+### =========================================================
+
+POST {{url}}/signout
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 23. TEST LOGOUT
+### This should FAIL with 401 Unauthorized
+### because {{authToken}} was blacklisted
+### =========================================================
+
+GET {{url}}/profile
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 24. LOGIN AGAIN
+### Gets a new JWT after logout
+### =========================================================
+
+POST {{url}}/login
+Content-Type: application/json
+
+{
+  "email": "jn@gmail.com",
+  "password": "jnjnjn"
+}
+
+> {%
+    client.global.set("authToken", response.body.jwtToken);
+%}
+
+
+### =========================================================
+### 25. TEST NEW TOKEN
+### Should work again after logging in
+### =========================================================
+
+GET {{url}}/profile
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 26. DELETE / DEACTIVATE CURRENT USER
+### RUN THIS LAST
+### =========================================================
+
+DELETE {{url}}/deactivate
+Authorization: Bearer {{authToken}}
+
+
+### =========================================================
+### 27. LOGIN AS ADMIN
+### =========================================================
+POST http://localhost:8080/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "jn@gmail.com",
+  "password": "jnjnjn"
+}
+
+> {%
+    client.global.set("authToken", response.body.jwtToken);
+%}
+
+
+### Register normal USER
+POST http://localhost:8080/api/v1/register
+Content-Type: application/json
+
+{
+  "name": "Normal User",
+  "email": "user@test.com",
+  "password": "user123",
+  "age": 22
+}
+
+### Login normal USER
+POST http://localhost:8080/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "user@test.com",
+  "password": "user123"
+}
+
+> {%
+    client.global.set("authToken", response.body.jwtToken);
+%}
+
+
+### Get all users
+GET http://localhost:8080/api/v1/admin/users
+Authorization: Bearer {{authToken}}
+
+### Admin - get all expenses
+GET http://localhost:8080/api/v1/admin/expenses
+Authorization: Bearer {{authToken}}
+
+### Admin - get one user's expenses
+GET http://localhost:8080/api/v1/admin/users/2/expenses
+Authorization: Bearer {{authToken}}
+
+### Admin - system-wide total spending
+GET http://localhost:8080/api/v1/admin/expenses/total
+Authorization: Bearer {{authToken}}
+
+### Get USD/LBP rate
+GET http://localhost:8080/api/v1/currency/rate
+Authorization: Bearer {{authToken}}
+
+### Create expense in LBP
+POST {{url}}/expenses
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Lunch",
+  "description": "Currency test",
+  "amount": 895000,
+  "currency": "LBP",
+  "categoryId": "9e3f31af-c550-4f6a-b6fe-b1b4ab7d98d2",
+  "date": "2026-09-10"
+}
+
+
+### Create expense in USD
+POST {{url}}/expenses
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Coffee",
+  "description": "USD currency test",
+  "amount": 5,
+  "currency": "USD",
+  "categoryId": "9e3f31af-c550-4f6a-b6fe-b1b4ab7d98d2",
+  "date": "2026-09-10"
+}

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker | Categories</title>
+
+    <!-- AdminLTE -->
+    <link rel="stylesheet" th:href="@{/css/adminlte.min.css}">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+
+<div class="app-wrapper">
+
+    <!-- NAVBAR -->
+    <nav class="app-header navbar navbar-expand bg-body">
+        <div class="container-fluid">
+
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-lte-toggle="sidebar">
+                        <i class="bi bi-list"></i>
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="signout()">
+                        <i class="bi bi-box-arrow-right"></i> Sign Out
+                    </button>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+
+        <div class="sidebar-brand">
+            <a th:href="@{/dashboard}" class="brand-link">
+                <span class="brand-text fw-light">Expense Tracker</span>
+            </a>
+        </div>
+
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <ul class="nav sidebar-menu flex-column">
+
+                    <li class="nav-item">
+                        <a th:href="@{/dashboard}" class="nav-link">
+                            <i class="nav-icon bi bi-speedometer"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/expenses-page}" class="nav-link">
+                            <i class="nav-icon bi bi-cash-stack"></i>
+                            <p>Transactions</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/categories-page}" class="nav-link active">
+                            <i class="nav-icon bi bi-tags"></i>
+                            <p>Categories</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/logistics-page}" class="nav-link">
+                            <i class="nav-icon bi bi-bar-chart-line"></i>
+                            <p>Logistics</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/profile-page}" class="nav-link">
+                            <i class="nav-icon bi bi-person"></i>
+                            <p>Profile</p>
+                        </a>
+                    </li>
+
+                    <!-- Hidden unless logged-in user is ADMIN -->
+                    <li class="nav-item" id="adminMenuItem" style="display: none;">
+                        <a th:href="@{/admin-page}" class="nav-link">
+                            <i class="nav-icon bi bi-shield-lock"></i>
+                            <p>Admin Panel</p>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="app-main">
+
+        <!-- Page header -->
+        <div class="app-content-header">
+            <div class="container-fluid">
+
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+
+                    <h3 class="mb-0">Categories</h3>
+
+                    <!-- Opens Bootstrap modal -->
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#categoryModal">
+                        <i class="bi bi-plus-lg"></i> Add Category
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="app-content">
+            <div class="container-fluid">
+
+                <!-- Success/error messages inserted by JS -->
+                <div id="messageContainer"></div>
+
+                <!-- Category table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered table-striped align-middle">
+
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                                </thead>
+
+                                <!-- JavaScript fills this -->
+                                <tbody id="categoryTable">
+                                <tr>
+                                    <td colspan="3">Loading categories...</td>
+                                </tr>
+                                </tbody>
+
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+
+
+<!-- ADD CATEGORY MODAL -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Add Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="categoryForm">
+
+                <div class="modal-body">
+
+                    <!-- Name -->
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">Name</label>
+                        <input type="text"
+                               id="categoryName"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <!-- Optional Description -->
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">
+                            Description <span class="text-muted">(optional)</span>
+                        </label>
+                        <textarea id="categoryDescription"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Optional description"></textarea>
+                    </div>
+
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button id="saveCategoryButton" type="submit" class="btn btn-primary">
+                        Add Category
+                    </button>
+
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Bootstrap + AdminLTE -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/adminlte.min.js}"></script>
+
+<script>
+    // Get JWT saved during login
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+        window.location.replace("/api/v1/login-page");
+    }
+
+
+    // fetch() wrapper that automatically sends JWT
+    async function authenticatedFetch(url, options = {}) {
+        options.headers = {
+            ...(options.headers || {}),
+            "Authorization": "Bearer " + token
+        };
+
+        const response = await fetch(url, options);
+
+        // Invalid/expired JWT
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("authToken");
+            window.location.replace("/api/v1/login-page");
+            throw new Error("Unauthorized");
+        }
+
+        return response;
+    }
+
+
+    // GET logged-in user's categories
+    async function loadCategories() {
+        const table = document.getElementById("categoryTable");
+
+        try {
+            const response = await authenticatedFetch("/api/v1/categories");
+
+            if (!response.ok) {
+                const text = await response.text();
+
+                console.error(
+                    "Category loading failed:",
+                    response.status,
+                    text
+                );
+
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="3">Could not load categories.</td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+            // JSON response → JavaScript array
+            const categories = await response.json();
+
+            table.innerHTML = "";
+
+            if (categories.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="3">No categories found.</td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+            // Add one HTML row for every category
+            categories.forEach(category => {
+                table.innerHTML += `
+        <tr>
+            <td>${escapeHtml(category.name)}</td>
+
+            <td>${escapeHtml(category.description || "-")}</td>
+
+            <td>
+                <button type="button"
+                        class="btn btn-danger btn-sm"
+                        onclick="deleteCategory('${category.categoryId}')">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+    `;
+            });
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    // POST new category when form is submitted
+    document.getElementById("categoryForm").addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const button = document.getElementById("saveCategoryButton");
+
+        // Prevent double-clicking while request is running
+        button.disabled = true;
+
+        // Read form inputs
+        const category = {
+            name: document.getElementById("categoryName").value.trim(),
+            description: document.getElementById("categoryDescription").value.trim(),
+        };
+
+        try {
+            const response = await authenticatedFetch("/api/v1/categories", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(category)
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+
+                console.error(
+                    "Create category failed:",
+                    response.status,
+                    text
+                );
+
+                showMessage(
+                    "Could not add category. Status: " + response.status,
+                    "danger"
+                );
+
+                return;
+            }
+
+            showMessage("Category added successfully.", "success");
+
+            // Clear form
+            document.getElementById("categoryForm").reset();
+
+            // Close Bootstrap modal
+            const modal = bootstrap.Modal.getInstance(
+                document.getElementById("categoryModal")
+            );
+
+            if (modal) {
+                modal.hide();
+            }
+
+            // Reload table
+            await loadCategories();
+
+        } catch (error) {
+            console.error(error);
+
+        } finally {
+            // Re-enable button whether request succeeded or failed
+            button.disabled = false;
+        }
+    });
+
+
+    // DELETE category
+    async function deleteCategory(categoryId) {
+
+        const confirmed = confirm(
+            "Are you sure you want to delete this category?\n\n" +
+            "All expenses related to this category will also be deleted."
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await authenticatedFetch(
+                "/api/v1/categories/" + categoryId,
+                {
+                    method: "DELETE"
+                }
+            );
+
+            if (!response.ok) {
+                const text = await response.text();
+
+                console.error(
+                    "Delete category failed:",
+                    response.status,
+                    text
+                );
+
+                showMessage(
+                    "Could not delete category. Status: " + response.status,
+                    "danger"
+                );
+
+                return;
+            }
+
+            showMessage(
+                "Category and related expenses deleted successfully.",
+                "success"
+            );
+
+            // Reload remaining categories
+            await loadCategories();
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    // Sign out and blacklist JWT
+    async function signout() {
+
+        if (!confirm("Are you sure you want to sign out?")) {
+            return;
+        }
+
+        const currentToken = localStorage.getItem("authToken");
+
+        try {
+            if (currentToken) {
+                const response = await fetch("/api/v1/signout", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + currentToken
+                    }
+                });
+
+                if (!response.ok) {
+                    alert("Sign out failed. Status: " + response.status);
+                    return;
+                }
+            }
+
+            localStorage.removeItem("authToken");
+            window.location.replace("/api/v1/login-page");
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    // Show Bootstrap success/error message
+    function showMessage(message, type) {
+        document.getElementById("messageContainer").innerHTML = `
+            <div class="alert alert-${type}">
+                ${message}
+            </div>
+        `;
+    }
+
+
+    // Prevent user data from being interpreted as HTML
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+
+    // CHECK ADMIN ROLE
+    async function checkAdminRole() {
+        try {
+            const response = await authenticatedFetch("/api/v1/profile");
+
+            if (!response.ok) {
+                return;
+            }
+
+            const user = await response.json();
+
+            if (user.role !== "ADMIN") {
+                document.getElementById("adminMenuItem").style.display = "none";
+            }
+
+        } catch (error) {
+            console.error("Role check error:", error);
+        }
+    }
+
+
+    // Load categories when page opens
+    if (token) {
+        loadCategories();
+        checkAdminRole();
+    }
+
+
+
+</script>
+
+</body>
+</html>

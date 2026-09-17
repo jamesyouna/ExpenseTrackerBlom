@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker | Register</title>
+
+    <!-- AdminLTE styling -->
+    <link rel="stylesheet" th:href="@{/css/adminlte.min.css}">
+
+    <!-- Bootstrap icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class="register-page bg-body-secondary">
+
+<div class="register-box">
+
+    <div class="register-logo">
+        <b>Expense</b> Tracker
+    </div>
+
+    <div class="card">
+        <div class="card-body register-card-body">
+
+            <p class="register-box-msg">Create a new account</p>
+
+            <!-- Registration form -->
+            <form id="registerForm">
+
+                <!-- Name -->
+                <div class="input-group mb-3">
+                    <input type="text"
+                           id="name"
+                           class="form-control"
+                           placeholder="Full Name"
+                           required>
+
+                    <div class="input-group-text">
+                        <i class="bi bi-person"></i>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="input-group mb-3">
+                    <input type="email"
+                           id="email"
+                           class="form-control"
+                           placeholder="Email"
+                           required>
+
+                    <div class="input-group-text">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                </div>
+
+                <!-- Age -->
+                <div class="input-group mb-3">
+                    <input type="number"
+                           id="age"
+                           class="form-control"
+                           placeholder="Age"
+                           min="1" required>
+
+                    <div class="input-group-text">
+                        <i class="bi bi-calendar"></i>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="input-group mb-3">
+                    <input type="password"
+                           id="password"
+                           class="form-control"
+                           placeholder="Password"
+                           minlength="5" required>
+
+                    <div class="input-group-text">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                </div>
+
+                <!-- Hidden error message -->
+                <div id="registerError" class="alert alert-danger d-none"></div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+
+            </form>
+
+            <p class="mb-0 mt-3 text-center">
+                Already have an account?
+                <a th:href="@{/login-page}">Sign In</a>
+            </p>
+
+        </div>
+    </div>
+</div>
+
+<!-- AdminLTE built-in functionality -->
+<script th:src="@{/js/adminlte.min.js}"></script>
+
+<script>
+    // Run when registration form is submitted
+    document.getElementById("registerForm").addEventListener("submit", async function (event) {
+
+        // Stop normal HTML form submission
+        event.preventDefault();
+
+        // Read inputs and create a JavaScript object
+        const userData = {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            age: Number(document.getElementById("age").value),
+            password: document.getElementById("password").value
+        };
+
+        try {
+            // Send registration data to Spring Boot
+            const response = await fetch("/api/v1/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(userData)
+            });
+
+            // Successful registration
+            if (response.ok) {
+                sessionStorage.setItem("verificationEmail", userData.email);
+
+                alert("Account created. A verification code was sent to your email.");
+
+                window.location.href = "/api/v1/verify-page";
+                return;
+            }
+
+            // Read error returned by backend
+            const text = await response.text();
+            const errorBox = document.getElementById("registerError");
+
+            // Display backend error or default message
+            errorBox.textContent = text || "Could not create account.";
+            errorBox.classList.remove("d-none");
+
+        } catch (error) {
+            console.error("Registration error:", error);
+        }
+    });
+</script>
+
+</body>
+</html>

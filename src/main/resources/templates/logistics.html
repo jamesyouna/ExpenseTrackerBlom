@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics | BLOM Expense Tracker</title>
+
+    <link rel="stylesheet" href="/api/v1/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+    <!-- to fit box-->
+    <style>
+        .small-box .inner {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .small-box .inner h3 {
+            font-size: clamp(1rem, 2vw, 2rem) !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            max-width: 100%;
+            margin-right: 0;
+        }
+
+        .small-box {
+            overflow: hidden;
+        }
+    </style>
+
+</head>
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+
+<div class="app-wrapper">
+
+    <!-- NAVBAR -->
+    <nav class="app-header navbar navbar-expand bg-body">
+        <div class="container-fluid">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+                        <i class="bi bi-list"></i>
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+
+                <li class="nav-item me-2">
+                    <select id="displayCurrency"
+                            class="form-select form-select-sm"
+                            onchange="changeDisplayCurrency()">
+                        <option value="USD">USD</option>
+                        <option value="LBP">LBP</option>
+                    </select>
+                </li>
+
+                <li class="nav-item">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="signout()">
+                        <i class="bi bi-box-arrow-right"></i> Sign Out
+                    </button>
+                </li>
+
+            </ul>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+
+        <div class="sidebar-brand">
+            <a th:href="@{/dashboard}" class="brand-link">
+                <span class="brand-text fw-light">Expense Tracker</span>
+            </a>
+        </div>
+
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <ul class="nav sidebar-menu flex-column"
+                    data-lte-toggle="treeview"
+                    role="menu"
+                    data-accordion="false">
+
+                    <li class="nav-item">
+                        <a th:href="@{/dashboard}" class="nav-link">
+                            <i class="nav-icon bi bi-speedometer"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/expenses-page}" class="nav-link">
+                            <i class="nav-icon bi bi-cash-stack"></i>
+                            <p>Transactions</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/categories-page}" class="nav-link">
+                            <i class="nav-icon bi bi-tags"></i>
+                            <p>Categories</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/logistics-page}" class="nav-link active">
+                            <i class="nav-icon bi bi-bar-chart-line"></i>
+                            <p>Logistics</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/profile-page}" class="nav-link">
+                            <i class="nav-icon bi bi-person"></i>
+                            <p>Profile</p>
+                        </a>
+                    </li>
+
+                    <!-- Hidden unless logged-in user is ADMIN -->
+                    <li class="nav-item" id="adminMenuItem" style="display: none;">
+                        <a th:href="@{/admin-page}" class="nav-link">
+                            <i class="nav-icon bi bi-shield-lock"></i>
+                            <p>Admin Panel</p>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="app-main">
+
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+
+                    <div class="col-sm-6">
+                        <h3 class="mb-0">Financial Logistics</h3>
+                        <small class="text-muted">Analyze your transactions and spending patterns</small>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="app-content">
+            <div class="container-fluid">
+
+                <!-- SUMMARY -->
+                <div class="row">
+
+                    <div class="col-lg-3 col-md-6">
+                        <div class="small-box text-bg-success">
+                            <div class="inner">
+                                <h3 id="totalDeposits">$0.00</h3>
+                                <p>Total Deposits</p>
+                            </div>
+                            <i class="small-box-icon bi bi-arrow-down-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <div class="small-box text-bg-danger">
+                            <div class="inner">
+                                <h3 id="totalWithdrawals">$0.00</h3>
+                                <p>Total Withdrawals</p>
+                            </div>
+                            <i class="small-box-icon bi bi-arrow-up-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <div class="small-box text-bg-primary">
+                            <div class="inner">
+                                <h3 id="netFlow">$0.00</h3>
+                                <p>Net Cash Flow</p>
+                            </div>
+                            <i class="small-box-icon bi bi-wallet2"></i>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <div class="small-box text-bg-warning">
+                            <div class="inner">
+                                <h3 id="topCategory">-</h3>
+                                <p>Top Spending Category</p>
+                            </div>
+                            <i class="small-box-icon bi bi-trophy"></i>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- MONTH FILTER -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-1">Category Analysis</h5>
+                                <span class="text-muted">
+                                    Select a month to analyze spending by category.
+                                </span>
+                            </div>
+
+                            <div class="col-md-3 ms-auto">
+                                <select id="monthFilter"
+                                        class="form-select"
+                                        onchange="updateCategoryAnalysis()">
+                                    <option value="ALL">All Months</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHARTS -->
+                <div class="row">
+
+                    <div class="col-lg-7">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Monthly Cash Flow</h3>
+                            </div>
+
+                            <div class="card-body">
+                                <div style="height: 360px;">
+                                    <canvas id="monthlyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Expenses by Category</h3>
+                            </div>
+
+                            <div class="card-body">
+                                <div style="height: 360px;">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <strong>BLOM Expense Tracker</strong>
+    </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/api/v1/js/adminlte.min.js"></script>
+
+<script>
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+        window.location.href = "/api/v1/login-page";
+    }
+
+    let expenses = [];
+    let exchangeRate = 89500;
+    let displayCurrency = localStorage.getItem("displayCurrency") || "USD";
+
+    let monthlyChart = null;
+    let categoryChart = null;
+
+    async function authenticatedFetch(url, options = {}) {
+        options.headers = {
+            ...(options.headers || {}),
+            "Authorization": "Bearer " + token
+        };
+
+        const response = await fetch(url, options);
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("authToken");
+            window.location.href = "/api/v1/login-page";
+            throw new Error("Unauthorized");
+        }
+
+        return response;
+    }
+
+    async function loadExchangeRate() {
+        try {
+            const response =
+                await authenticatedFetch("/api/v1/currency/rate");
+
+            if (response.ok) {
+                exchangeRate = Number(await response.text());
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function loadExpenses() {
+        try {
+            const response =
+                await authenticatedFetch("/api/v1/expenses?size=100");
+
+            if (!response.ok) {
+                throw new Error("Could not load transactions");
+            }
+
+            expenses = await response.json();
+
+            populateMonthFilter();
+            updateSummary();
+            renderMonthlyChart();
+            updateCategoryAnalysis();
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+
+    // CHECK ADMIN ROLE
+    async function checkAdminRole() {
+        try {
+            const response = await authenticatedFetch("/api/v1/profile");
+
+            if (!response.ok) {
+                return;
+            }
+
+            const user = await response.json();
+
+            if (user.role !== "ADMIN") {
+                document.getElementById("adminMenuItem").style.display = "none";
+            }
+
+        } catch (error) {
+            console.error("Role check error:", error);
+        }
+    }
+
+
+    function updateSummary() {
+        let deposits = 0;
+        let withdrawals = 0;
+        const categoryTotals = {};
+
+        expenses.forEach(expense => {
+            const amount = Number(expense.amount || 0);
+            const type = expense.type || "WITHDRAW";
+
+            if (type === "DEPOSIT") {
+                deposits += amount;
+            } else {
+                withdrawals += amount;
+
+                const category = expense.category?.name || "Uncategorized";
+
+                categoryTotals[category] =
+                    (categoryTotals[category] || 0) + amount;
+            }
+        });
+
+        document.getElementById("totalDeposits").textContent =
+            formatCurrency(deposits);
+
+        document.getElementById("totalWithdrawals").textContent =
+            formatCurrency(withdrawals);
+
+        document.getElementById("netFlow").textContent =
+            formatCurrency(deposits - withdrawals);
+
+        const categories = Object.keys(categoryTotals);
+
+        if (categories.length === 0) {
+            document.getElementById("topCategory").textContent = "-";
+            return;
+        }
+
+        // goes through all categories and keep whichever one has the highest spending
+        const topCategory = categories.reduce((highest, category) =>
+            categoryTotals[category] > categoryTotals[highest]
+                ? category
+                : highest
+        );
+
+        document.getElementById("topCategory").textContent = topCategory;
+    }
+
+    function populateMonthFilter() {
+        const select = document.getElementById("monthFilter");
+
+        const months = new Set();
+
+        expenses.forEach(expense => {
+            if (!expense.date) {
+                return;
+            }
+
+            months.add(expense.date.substring(0, 7)); // 2026-09-19 ->  2026-09
+        });
+
+        const sortedMonths =
+            Array.from(months).sort().reverse();
+
+        select.innerHTML =
+            '<option value="ALL">All Months</option>';
+
+        sortedMonths.forEach(month => {
+            const option = document.createElement("option");
+
+            option.value = month;
+            option.textContent = formatMonth(month);
+
+            select.appendChild(option);
+        });
+    }
+
+    function renderMonthlyChart() {
+        const monthlyData = {};
+
+        expenses.forEach(expense => {
+            if (!expense.date) {
+                return;
+            }
+
+            const month = expense.date.substring(0, 7);
+            const amount = convertAmount(Number(expense.amount || 0));
+            const type = expense.type || "WITHDRAW";
+
+            if (!monthlyData[month]) {
+                monthlyData[month] = {
+                    deposits: 0,
+                    withdrawals: 0
+                };
+            }
+
+            if (type === "DEPOSIT") {
+                monthlyData[month].deposits += amount;
+            } else {
+                monthlyData[month].withdrawals += amount;
+            }
+        });
+
+        const months = Object.keys(monthlyData).sort();
+
+        const labels = months.map(formatMonth); //map goes through an array and transforms them
+
+        const deposits =
+            months.map(month => monthlyData[month].deposits);
+
+        const withdrawals =
+            months.map(month => monthlyData[month].withdrawals);
+
+        if (monthlyChart) {
+            monthlyChart.destroy();
+        }
+
+        monthlyChart = new Chart(
+            document.getElementById("monthlyChart"),
+            {
+                type: "bar",
+
+                data: {
+                    labels: labels,
+
+                    datasets: [
+                        {
+                            label: "Deposits",
+                            data: deposits,
+                            backgroundColor: "rgba(25, 135, 84, 0.7)"
+                        },
+                        {
+                            label: "Withdrawals",
+                            data: withdrawals,
+                            backgroundColor: "rgba(220, 53, 69, 0.7)"
+                        }
+                    ]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            }
+        );
+    }
+
+    function updateCategoryAnalysis() {
+        const selectedMonth =
+            document.getElementById("monthFilter").value;
+
+        const categoryTotals = {};
+
+        expenses.forEach(expense => {
+            const type = expense.type || "WITHDRAW";
+
+            // Deposits are not spending
+            if (type === "DEPOSIT") {
+                return;
+            }
+
+            if (!expense.date) {
+                return;
+            }
+
+            const month = expense.date.substring(0, 7);
+
+            if (selectedMonth !== "ALL" &&
+                month !== selectedMonth) {
+                return;
+            }
+
+            const category =
+                expense.category?.name || "Uncategorized";
+
+            const amount =
+                convertAmount(Number(expense.amount || 0));
+
+            categoryTotals[category] =
+                (categoryTotals[category] || 0) + amount;
+        });
+
+        const labels = Object.keys(categoryTotals);
+        const values = Object.values(categoryTotals);
+
+        if (categoryChart) {
+            categoryChart.destroy();
+        }
+
+        categoryChart = new Chart(
+            document.getElementById("categoryChart"),
+            {
+                type: "doughnut",
+
+                data: {
+                    labels: labels,
+
+                    datasets: [{
+                        data: values
+                    }]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            }
+        );
+    }
+
+    function convertAmount(amountUSD) {
+        if (displayCurrency === "LBP") {
+            return amountUSD * exchangeRate;
+        }
+
+        return amountUSD;
+    }
+
+    function formatCurrency(amountUSD) {
+        if (displayCurrency === "LBP") {
+            return Math.round(amountUSD * exchangeRate)
+                .toLocaleString() + " LBP";
+        }
+
+        return "$" + Number(amountUSD).toFixed(2);
+    }
+
+    function formatMonth(month) {
+        const [year, monthNumber] = month.split("-"); // array destructuring
+
+        const date =
+            new Date(Number(year), Number(monthNumber) - 1, 1);
+
+        return date.toLocaleString(
+            "en-US",
+            {
+                month: "short",
+                year: "numeric"
+            }
+        );
+    }
+
+    function changeDisplayCurrency() {
+        displayCurrency = document.getElementById("displayCurrency").value;
+        localStorage.setItem("displayCurrency", displayCurrency);
+
+        updateSummary();
+        renderMonthlyChart();
+        updateCategoryAnalysis();
+    }
+
+
+    async function signout() {
+        try {
+            await authenticatedFetch(
+                "/api/v1/signout",
+                {
+                    method: "POST"
+                }
+            );
+        } catch (error) {
+            console.error(error);
+        } finally {
+            localStorage.removeItem("authToken");
+            window.location.href = "/api/v1/login-page";
+        }
+    }
+
+    async function initializePage() {
+        document.getElementById("displayCurrency").value = displayCurrency;
+
+        await checkAdminRole();
+        await loadExchangeRate();
+        await loadExpenses();
+    }
+
+    initializePage();
+</script>
+
+</body>
+</html>

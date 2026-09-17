@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker | Profile</title>
+
+    <!-- AdminLTE styling -->
+    <link rel="stylesheet" th:href="@{/css/adminlte.min.css}">
+
+    <!-- Bootstrap icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+
+<div class="app-wrapper">
+
+    <!-- Top navbar -->
+    <nav class="app-header navbar navbar-expand bg-body">
+        <div class="container-fluid">
+
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <!-- AdminLTE sidebar toggle -->
+                    <a class="nav-link" href="#" data-lte-toggle="sidebar">
+                        <i class="bi bi-list"></i>
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="signout()">
+                        <i class="bi bi-box-arrow-right"></i> Sign Out
+                    </button>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+
+        <div class="sidebar-brand">
+            <a th:href="@{/dashboard}" class="brand-link">
+                <span class="brand-text fw-light">Expense Tracker</span>
+            </a>
+        </div>
+
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <ul class="nav sidebar-menu flex-column"> <!--unordered list -->
+
+                    <li class="nav-item">
+                        <a th:href="@{/dashboard}" class="nav-link">
+                            <i class="nav-icon bi bi-speedometer"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/expenses-page}" class="nav-link">
+                            <i class="nav-icon bi bi-cash-stack"></i>
+                            <p>Transactions</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/categories-page}" class="nav-link">
+                            <i class="nav-icon bi bi-tags"></i>
+                            <p>Categories</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/logistics-page}" class="nav-link">
+                            <i class="nav-icon bi bi-bar-chart-line"></i>
+                            <p>Logistics</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/profile-page}" class="nav-link active">
+                            <i class="nav-icon bi bi-person"></i>
+                            <p>Profile</p>
+                        </a>
+                    </li>
+
+                    <!-- Hidden unless logged-in user is ADMIN -->
+                    <li id="adminMenuItem" class="nav-item" style="display: none;">
+                        <a th:href="@{/admin-page}" class="nav-link">
+                            <i class="nav-icon bi bi-shield-lock"></i>
+                            <p>Admin Panel</p>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Main page -->
+    <main class="app-main">
+
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <h3 class="mb-0">My Profile</h3>
+            </div>
+        </div>
+
+        <div class="app-content">
+            <div class="container-fluid">
+
+                <!-- Success/error messages are inserted here by JS -->
+                <div id="messageContainer"></div>
+
+                <div class="row">
+                    <div class="col-12 col-lg-8 col-xl-6">
+
+                        <!-- Profile card -->
+                        <div class="card">
+
+                            <div class="card-header">
+                                <h3 class="card-title">Account Information</h3>
+                            </div>
+
+                            <div class="card-body">
+
+                                <form id="profileForm">
+
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Name</label>
+                                        <input id="name" type="text" class="form-control" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input id="email" type="email" class="form-control" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="age" class="form-label">Age</label>
+                                        <input id="age" type="number" class="form-control" min="1">
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">
+                                        Save Changes
+                                    </button>
+
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Account deletion -->
+                        <div class="card border-danger mt-4">
+
+                            <div class="card-header">
+                                <h3 class="card-title text-danger">Danger Zone</h3>
+                            </div>
+
+                            <div class="card-body">
+                                <p>Permanently deactivate your Expense Tracker account.</p>
+
+                                <button type="button" class="btn btn-danger"
+                                        onclick="deactivateAccount()">
+                                    Deactivate Account
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- AdminLTE built-in functionality -->
+<script th:src="@{/js/adminlte.min.js}"></script>
+
+
+
+<script>
+    // Get JWT saved during login
+    const token = localStorage.getItem("authToken");
+
+    // No JWT = send user back to login
+    if (!token) {
+        window.location.replace("/api/v1/login-page");
+    }
+
+
+    // Wrapper around fetch() that automatically sends the JWT
+    async function authenticatedFetch(url, options = {}) {
+
+        // Keep existing headers and add Authorization header
+        options.headers = {
+            ...(options.headers || {}),
+            "Authorization": "Bearer " + token
+        };
+
+        const response = await fetch(url, options);
+
+        // Invalid/expired JWT = remove token and return to login
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("authToken");
+            window.location.replace("/api/v1/login-page");
+            throw new Error("Unauthorized");
+        }
+
+        return response;
+    }
+
+
+    // GET current user's profile from Spring Boot
+    async function loadProfile() {
+        try {
+            const response = await authenticatedFetch("/api/v1/profile");
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error("Profile failed:", response.status, text);
+                showMessage("Could not load profile.", "danger");
+                return;
+            }
+
+            // JSON response → JavaScript object
+            const user = await response.json();
+            if (user.role !== "ADMIN") {
+                document.getElementById("adminMenuItem").style.display = "none";
+            }
+
+            // Put returned data into HTML inputs
+            document.getElementById("name").value = user.name || "";
+            document.getElementById("email").value = user.email || "";
+            document.getElementById("age").value = user.age ?? "";
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    // Update profile when form is submitted
+    document.getElementById("profileForm").addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const ageValue = document.getElementById("age").value;
+
+        // Read form inputs
+        const user = {
+            name: document.getElementById("name").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            age: ageValue ? Number(ageValue) : null
+        };
+
+        try {
+            // PUT updated profile to Spring Boot
+            const response = await authenticatedFetch("/api/v1/profile", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(user)
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error("Profile update failed:", response.status, text);
+                showMessage("Could not update profile. Status: " + response.status, "danger");
+                return;
+            }
+
+            showMessage("Profile updated successfully.", "success");
+
+            // Reload profile with latest DB values
+            await loadProfile();
+
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+
+    // CHECK ADMIN ROLE
+    async function checkAdminRole() {
+        try {
+            const response = await authenticatedFetch("/api/v1/profile");
+            if (!response.ok) return;
+
+            const user = await response.json();
+
+        } catch (error) {
+            console.error("Could not check admin role:", error);
+        }
+    }
+
+
+    // DELETE current user's account
+    async function deactivateAccount() {
+
+        const confirmed = confirm("Are you sure you want to deactivate your account?");
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await authenticatedFetch("/api/v1/deactivate", {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error("Deactivate failed:", response.status, text);
+                showMessage("Could not deactivate account. Status: " + response.status, "danger");
+                return;
+            }
+
+            // Account deleted, so remove JWT and return to login
+            localStorage.removeItem("authToken");
+            window.location.replace("/api/v1/login-page");
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    // Sign out and blacklist JWT on backend
+    async function signout() {
+
+        if (!confirm("Are you sure you want to sign out?")) {
+            return;
+        }
+
+        const currentToken = localStorage.getItem("authToken");
+
+        try {
+            if (currentToken) {
+                const response = await fetch("/api/v1/signout", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + currentToken
+                    }
+                });
+
+                if (!response.ok) {
+                    alert("Sign out failed. Status: " + response.status);
+                    return;
+                }
+            }
+
+            // Remove JWT from browser
+            localStorage.removeItem("authToken");
+            window.location.replace("/api/v1/login-page");
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    // Display Bootstrap success/error alert
+    function showMessage(message, type) {
+        document.getElementById("messageContainer").innerHTML = `
+            <div class="alert alert-${type}">
+                ${message}
+            </div>
+        `;
+    }
+
+
+    // Load profile when page opens
+    if (token) {
+        loadProfile();
+        checkAdminRole();
+
+    }
+
+</script>
+
+</body>
+</html>

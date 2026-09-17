@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker | Admin Panel</title>
+
+    <link rel="stylesheet" th:href="@{/css/adminlte.min.css}">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+
+    <!-- to fit text -->
+    <style>
+        .small-box .inner {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .small-box .inner h3 {
+            font-size: clamp(1rem, 2vw, 2rem) !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            max-width: 100%;
+            margin-right: 0;
+        }
+
+        .small-box {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+
+<div class="app-wrapper">
+
+    <!-- NAVBAR -->
+    <nav class="app-header navbar navbar-expand bg-body">
+        <div class="container-fluid">
+
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-lte-toggle="sidebar" role="button">
+                        <i class="bi bi-list"></i>
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item me-2">
+                    <select id="displayCurrency"
+                            class="form-select form-select-sm"
+                            onchange="changeDisplayCurrency()">
+                        <option value="USD">USD</option>
+                        <option value="LBP">LBP</option>
+                    </select>
+                </li>
+
+                <li class="nav-item">
+                    <button type="button"
+                            class="btn btn-danger btn-sm"
+                            onclick="signout()">
+                        <i class="bi bi-box-arrow-right"></i> Sign Out
+                    </button>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+
+        <div class="sidebar-brand">
+            <a th:href="@{/dashboard}" class="brand-link">
+                <span class="brand-text fw-light">Expense Tracker</span>
+            </a>
+        </div>
+
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <ul class="nav sidebar-menu flex-column"
+                    data-lte-toggle="treeview"
+                    role="menu"
+                    data-accordion="false">
+
+                    <li class="nav-item">
+                        <a th:href="@{/dashboard}" class="nav-link">
+                            <i class="nav-icon bi bi-speedometer"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/expenses-page}" class="nav-link">
+                            <i class="nav-icon bi bi-cash-stack"></i>
+                            <p>Transactions</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/categories-page}" class="nav-link">
+                            <i class="nav-icon bi bi-tags"></i>
+                            <p>Categories</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/logistics-page}" class="nav-link">
+                            <i class="nav-icon bi bi-bar-chart-line"></i>
+                            <p>Logistics</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/profile-page}" class="nav-link">
+                            <i class="nav-icon bi bi-person"></i>
+                            <p>Profile</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/admin-page}" class="nav-link active">
+                            <i class="nav-icon bi bi-shield-lock"></i>
+                            <p>Admin Panel</p>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="app-main">
+
+        <!-- PAGE HEADER -->
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <h3 class="mb-0">Admin Panel</h3>
+                        <small class="text-muted">
+                            System-wide user and transaction management
+                        </small>
+                    </div>
+
+                    <span class="badge text-bg-danger">ADMIN</span>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="app-content">
+            <div class="container-fluid">
+
+                <!-- SYSTEM SUMMARY -->
+                <div class="row g-3">
+
+                    <div class="col-12 col-md-3">
+                        <div class="small-box text-bg-primary h-100">
+                            <div class="inner">
+                                <h3 id="totalUsers" >0</h3>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <div class="small-box text-bg-info h-100">
+                            <div class="inner">
+                                <h3 id="totalTransactions">0</h3>
+                                <p>Total Transactions</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <div class="small-box text-bg-success h-100">
+                            <div class="inner">
+                                <h3 id="systemDeposits">$0.00</h3>
+                                <p>Total Deposits</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <div class="small-box text-bg-danger h-100">
+                            <div class="inner">
+                                <h3 id="systemWithdrawals">$0.00</h3>
+                                <p>Total Withdrawals</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- EXCHANGE RATE -->
+                <div class="alert alert-light border mt-3">
+                    <i class="bi bi-currency-exchange"></i>
+                    Exchange Rate:
+                    <strong>
+                        1 USD =
+                        <span id="exchangeRate">Loading...</span>
+                        LBP
+                    </strong>
+                </div>
+
+
+                <!-- USER SEARCH -->
+                <div class="card mt-4">
+
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="bi bi-search"></i> Search Users
+                        </h3>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row g-2">
+
+                            <div class="col-md-10">
+                                <input type="email"
+                                       id="emailSearch"
+                                       class="form-control"
+                                       placeholder="Search by email..."
+                                       onkeydown="handleSearchKey(event)">
+                            </div>
+
+                            <div class="col-md-2 d-grid">
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        onclick="searchUsers()">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div class="mt-2">
+                            <button type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    onclick="clearSearch()">
+                                Show All Users
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- USERS TABLE -->
+                <div class="card">
+
+                    <div class="card-header">
+                        <h3 class="card-title">Users</h3>
+                    </div>
+
+                    <div class="card-body table-responsive p-0">
+
+                        <table class="table table-hover text-nowrap">
+
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="usersTable">
+                            <tr>
+                                <td colspan="4" class="text-center">
+                                    Loading users...
+                                </td>
+                            </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        <small id="userPaginationInfo" class="text-muted"></small>
+
+                        <nav>
+                            <ul id="userPagination" class="pagination pagination-sm mb-0"></ul>
+                        </nav>
+                    </div>
+
+                </div>
+
+
+                <!-- TRANSACTIONS -->
+                <div class="card mt-4">
+
+                    <div class="card-header d-flex justify-content-between align-items-center">
+
+                        <h3 id="transactionTableTitle" class="card-title">
+                            All System Transactions
+                        </h3>
+
+                        <button type="button"
+                                id="showAllTransactionsButton"
+                                class="btn btn-outline-primary btn-sm"
+                                onclick="showAllTransactions()"
+                                style="display: none;">
+                            Show All Transactions
+                        </button>
+
+                    </div>
+
+                    <div class="card-body table-responsive p-0">
+
+                        <table class="table table-hover text-nowrap">
+
+                            <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="transactionsTable">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    Loading transactions...
+                                </td>
+                            </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        <small id="paginationInfo" class="text-muted"></small>
+
+                        <nav>
+                            <ul id="transactionPagination" class="pagination pagination-sm mb-0"></ul>
+                        </nav>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+
+<script th:src="@{/js/adminlte.min.js}"></script>
+
+<script>
+    // JWT TOKEN
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+        window.location.replace("/api/v1/login-page");
+    }
+
+
+    // GLOBAL DATA
+    let usersData = [];
+    let displayedUsersData = [];
+    let allTransactionsData = [];
+    let displayedTransactionsData = [];
+
+    // PAGINATION
+    let currentPage = 1;
+    const transactionsPerPage = 5;
+    let currentUserPage = 1;
+    const usersPerPage = 5;
+
+
+
+    let exchangeRate = 89500;
+    let displayCurrency =
+        localStorage.getItem("displayCurrency") || "USD";
+
+    document.getElementById("displayCurrency").value =
+        displayCurrency;
+
+
+    // FETCH WITH JWT
+    async function authenticatedFetch(url, options = {}) {
+        options.headers = {
+            ...(options.headers || {}),
+            "Authorization": "Bearer " + token
+        };
+
+        const response = await fetch(url, options);
+
+        if (response.status === 401) {
+            localStorage.removeItem("authToken");
+            window.location.replace("/api/v1/login-page");
+            throw new Error("Unauthorized");
+        }
+
+        return response;
+    }
+
+
+    // VERIFY CURRENT USER IS ADMIN
+    async function verifyAdmin() {
+        try {
+            const response =
+                await authenticatedFetch("/api/v1/profile");
+
+            if (!response.ok) {
+                window.location.replace("/api/v1/dashboard");
+                return false;
+            }
+
+            const user = await response.json();
+
+            if (user.role !== "ADMIN") {
+                alert("Administrator access only.");
+                window.location.replace("/api/v1/dashboard");
+                return false;
+            }
+
+            return true;
+
+        } catch (error) {
+            console.error("Admin verification error:", error);
+            return false;
+        }
+    }
+
+
+    // LOAD USD -> LBP EXCHANGE RATE
+    async function loadExchangeRate() {
+        try {
+            const response =
+                await authenticatedFetch("/api/v1/currency/rate");
+
+            if (!response.ok) {
+                throw new Error("Could not load exchange rate");
+            }
+
+            exchangeRate = Number(await response.text());
+
+            document.getElementById("exchangeRate").textContent =
+                exchangeRate.toLocaleString();
+
+        } catch (error) {
+            console.error("Exchange rate error:", error);
+
+            // Show fallback rate instead of leaving "Loading..."
+            document.getElementById("exchangeRate").textContent =
+                exchangeRate.toLocaleString();
+        }
+    }
+
+
+    // LOAD ALL USERS
+    async function loadUsers() {
+        const table = document.getElementById("usersTable");
+
+        try {
+            const response =
+                await authenticatedFetch("/api/v1/admin/users");
+
+            if (response.status === 403) {
+                window.location.replace("/api/v1/dashboard");
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    "Could not load users. HTTP " + response.status
+                );
+            }
+
+            usersData = await response.json();
+
+            document.getElementById("totalUsers").textContent =
+                usersData.length;
+
+            renderUsers(usersData);
+
+        } catch (error) {
+            console.error("Users error:", error);
+
+            table.innerHTML = `
+                <tr>
+                    <td colspan="4"
+                        class="text-center text-danger">
+                        Could not load users.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+
+    // DISPLAY USERS
+    function renderUsers(users) {
+        displayedUsersData = users;
+        const table = document.getElementById("usersTable");
+
+        table.innerHTML = "";
+
+        if (!users || users.length === 0) {
+            table.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center">
+                    No users found.
+                </td>
+            </tr>
+        `;
+
+            document.getElementById("userPagination").innerHTML = "";
+            document.getElementById("userPaginationInfo").textContent = "";
+            return;
+        }
+
+        const start = (currentUserPage - 1) * usersPerPage;
+        const end = start + usersPerPage;
+
+        const pageUsers = users.slice(start, end);
+
+        pageUsers.forEach(user => {
+            const role = user.role || "USER";
+
+            const roleClass =
+                role === "ADMIN"
+                    ? "text-bg-danger"
+                    : "text-bg-secondary";
+
+            const userId = user.id;
+
+            table.innerHTML += `
+            <tr>
+                <td>${escapeHtml(user.name || "")}</td>
+
+                <td>${escapeHtml(user.email || "")}</td>
+
+                <td>
+                    <span class="badge ${roleClass}">
+                        ${escapeHtml(role)}
+                    </span>
+                </td>
+
+                <td>
+                    <button class="btn btn-sm btn-primary"
+                            onclick="viewUserTransactions(
+                                '${userId}',
+                                '${escapeJavaScript(user.email || "")}'
+                            )">
+                        <i class="bi bi-cash-stack"></i>
+                        View Transactions
+                    </button>
+
+                    ${role === "USER" ? `
+                    <button class="btn btn-sm btn-danger"
+                            onclick="deleteUser(
+                                '${userId}',
+                                '${escapeJavaScript(user.email || "")}'
+                            )">
+                        <i class="bi bi-trash"></i>
+                        Delete User
+                    </button>
+                    ` : ""}
+                </td>
+            </tr>
+        `;
+        });
+
+        renderUserPagination(users);
+    }
+
+
+    // FOR PAGINATION
+    function renderUserPagination(users) {
+        const pagination = document.getElementById("userPagination");
+        const info = document.getElementById("userPaginationInfo");
+
+        const totalPages = Math.ceil(users.length / usersPerPage);
+
+        const start = (currentUserPage - 1) * usersPerPage + 1;
+        const end = Math.min(currentUserPage * usersPerPage, users.length);
+
+        info.textContent = `Showing ${start}-${end} of ${users.length}`;
+        pagination.innerHTML = "";
+
+        pagination.innerHTML += `
+        <li class="page-item ${currentUserPage === 1 ? "disabled" : ""}">
+            <button class="page-link"
+                    onclick="changeUserPage(${currentUserPage - 1})">
+                Previous
+            </button>
+        </li>
+    `;
+
+        for (let page = 1; page <= totalPages; page++) {
+            pagination.innerHTML += `
+            <li class="page-item ${page === currentUserPage ? "active" : ""}">
+                <button class="page-link"
+                        onclick="changeUserPage(${page})">
+                    ${page}
+                </button>
+            </li>
+        `;
+        }
+
+        pagination.innerHTML += `
+        <li class="page-item ${currentUserPage === totalPages ? "disabled" : ""}">
+            <button class="page-link"
+                    onclick="changeUserPage(${currentUserPage + 1})">
+                Next
+            </button>
+        </li>
+    `;
+    }
+
+    function changeUserPage(page) {
+        const totalPages = Math.ceil(displayedUsersData.length / usersPerPage);
+
+        if (page < 1 || page > totalPages) {
+            return;
+        }
+
+        currentUserPage = page;
+        renderUsers(displayedUsersData);
+    }
+
+
+
+
+
+    // SEARCH USER BY EMAIL
+    async function searchUsers() {
+        const email =
+            document.getElementById("emailSearch").value.trim();
+
+        if (!email) {
+            currentUserPage = 1;
+            renderUsers(usersData);
+            return;
+        }
+
+
+        try {
+            const response =
+                await authenticatedFetch(
+                    "/api/v1/admin/users/search?email=" +
+                    encodeURIComponent(email)
+                );
+
+            if (!response.ok) {
+                throw new Error("Search failed");
+            }
+
+            const users = await response.json();
+
+            currentUserPage = 1;
+            renderUsers(users);
+
+        } catch (error) {
+            console.error("Search error:", error);
+            alert("Could not search users.");
+        }
+    }
+
+
+    function handleSearchKey(event) {
+        if (event.key === "Enter") {
+            searchUsers();
+        }
+    }
+
+
+    function clearSearch() {
+        document.getElementById("emailSearch").value = "";
+        currentUserPage = 1;
+        renderUsers(usersData);
+    }
+
+
+    // DELETE USER
+    async function deleteUser(userId, email) {
+        const confirmed =
+            confirm(
+                "Are you sure you want to delete " +
+                email +
+                "?"
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response =
+                await authenticatedFetch(
+                    "/api/v1/admin/users/" + userId,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+            if (!response.ok) {
+                const message =
+                    await response.text();
+
+                throw new Error(
+                    message || "Could not delete user"
+                );
+            }
+
+            alert("User deleted successfully.");
+
+            currentUserPage = 1;
+
+            await loadUsers();
+            await loadAllTransactions();
+
+        } catch (error) {
+            console.error("Delete user error:", error);
+            alert("Could not delete user.");
+        }
+    }
+
+
+    // LOAD TRANSACTIONS FOR EVERY USER
+    async function loadAllTransactions() {
+        const table =
+            document.getElementById("transactionsTable");
+
+        const transactions = [];
+
+        try {
+            for (const user of usersData) {
+
+                try {
+                    const response =
+                        await authenticatedFetch(
+                            "/api/v1/admin/users/" +
+                            user.id +
+                            "/expenses"
+                        );
+
+                    if (!response.ok) {
+                        console.error(
+                            "Could not load transactions for:",
+                            user.email
+                        );
+
+                        continue;
+                    }
+
+
+                    const userTransactions =
+                        await response.json();
+
+
+                    userTransactions.forEach(transaction => {
+                        transactions.push({
+                            ...transaction,
+                            ownerEmail: user.email,
+                            ownerName: user.name
+                        });
+                    });
+
+                } catch (error) {
+                    console.error(
+                        "Could not load transactions for:",
+                        user.email,
+                        error
+                    );
+                }
+            }
+
+
+            allTransactionsData = transactions;
+
+            updateSystemSummary();
+            renderTransactions(allTransactionsData);
+
+        } catch (error) {
+            console.error(
+                "Transactions error:",
+                error
+            );
+
+            table.innerHTML = `
+                <tr>
+                    <td colspan="6"
+                        class="text-center text-danger">
+                        Could not load transactions.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // DISPLAY PAGINATION
+    function renderPagination(totalTransactions) {
+        const pagination = document.getElementById("transactionPagination");
+        const info = document.getElementById("paginationInfo");
+
+        const totalPages = Math.ceil(totalTransactions / transactionsPerPage);
+
+        const start = (currentPage - 1) * transactionsPerPage + 1;
+        const end = Math.min(currentPage * transactionsPerPage, totalTransactions);
+
+        info.textContent = `Showing ${start}-${end} of ${totalTransactions}`;
+        pagination.innerHTML = "";
+
+        pagination.innerHTML += `
+        <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+            <button class="page-link" onclick="changePage(${currentPage - 1})">
+                Previous
+            </button>
+        </li>
+    `;
+
+        for (let page = 1; page <= totalPages; page++) {
+            pagination.innerHTML += `
+            <li class="page-item ${page === currentPage ? "active" : ""}">
+                <button class="page-link" onclick="changePage(${page})">
+                    ${page}
+                </button>
+            </li>
+        `;
+        }
+
+        pagination.innerHTML += `
+        <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+            <button class="page-link" onclick="changePage(${currentPage + 1})">
+                Next
+            </button>
+        </li>
+    `;
+    }
+
+    function changePage(page) {
+        const totalPages = Math.ceil(
+            displayedTransactionsData.length / transactionsPerPage
+        );
+
+        if (page < 1 || page > totalPages) return;
+
+        currentPage = page;
+        renderTransactions(displayedTransactionsData);
+    }
+
+
+    // VIEW ONE USER'S TRANSACTIONS
+    async function viewUserTransactions(userId, email) {
+        try {
+            const response =
+                await authenticatedFetch(
+                    "/api/v1/admin/users/" +
+                    userId +
+                    "/expenses"
+                );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    "Could not load user transactions"
+                );
+            }
+
+
+            const transactions =
+                await response.json();
+
+
+            transactions.forEach(transaction => {
+                transaction.ownerEmail = email;
+            });
+
+
+            document.getElementById(
+                "transactionTableTitle"
+            ).textContent =
+                "Transactions for " + email;
+
+
+            document.getElementById(
+                "showAllTransactionsButton"
+            ).style.display =
+                "inline-block";
+
+            currentPage = 1;
+            renderTransactions(transactions);
+
+        } catch (error) {
+            console.error(error);
+
+            alert(
+                "Could not load this user's transactions."
+            );
+        }
+    }
+
+
+    // RETURN TO ALL TRANSACTIONS
+    function showAllTransactions() {
+        currentPage = 1;
+        document.getElementById(
+            "transactionTableTitle"
+        ).textContent =
+            "All System Transactions";
+
+
+        document.getElementById(
+            "showAllTransactionsButton"
+        ).style.display =
+            "none";
+
+
+        renderTransactions(allTransactionsData);
+    }
+
+
+    // DISPLAY TRANSACTIONS AND PAGINATION
+    function renderTransactions(transactions) {
+        displayedTransactionsData = transactions;
+        const table = document.getElementById("transactionsTable");
+        table.innerHTML = "";
+
+        if (!transactions || transactions.length === 0) {
+            table.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center">No transactions found.</td>
+            </tr>
+        `;
+            return;
+        }
+
+        const start = (currentPage - 1) * transactionsPerPage;
+        const end = start + transactionsPerPage;
+        const pageTransactions = transactions.slice(start, end);
+
+        pageTransactions.forEach(transaction => {
+            const type = transaction.type || "WITHDRAW";
+            const isDeposit = type === "DEPOSIT";
+
+            const sign = isDeposit ? "+" : "-";
+            const amountClass = isDeposit ? "text-success" : "text-danger";
+            const badgeClass = isDeposit ? "text-bg-success" : "text-bg-danger";
+
+            const categoryName = transaction.category
+                ? transaction.category.name
+                : transaction.categoryDTO
+                    ? transaction.categoryDTO.name
+                    : "-";
+
+            table.innerHTML += `
+            <tr>
+                <td>${escapeHtml(transaction.ownerEmail || "-")}</td>
+                <td>${escapeHtml(transaction.name || "")}</td>
+                <td>${escapeHtml(categoryName)}</td>
+                <td>
+                    <span class="badge ${badgeClass}">
+                        ${escapeHtml(type)}
+                    </span>
+                </td>
+                <td class="${amountClass} fw-bold">
+                    ${sign}${formatCurrency(Number(transaction.amount || 0))}
+                </td>
+                <td>${formatDate(transaction.date)}</td>
+            </tr>
+        `;
+        });
+
+        renderPagination(transactions.length);
+    }
+
+
+    // CALCULATE SYSTEM TOTALS
+    function updateSystemSummary() {
+        let deposits = 0;
+        let withdrawals = 0;
+
+
+        allTransactionsData.forEach(transaction => {
+            const amount =
+                Number(transaction.amount || 0);
+
+            const type =
+                transaction.type || "WITHDRAW";
+
+
+            if (type === "DEPOSIT") {
+                deposits += amount;
+            } else {
+                withdrawals += amount;
+            }
+        });
+
+
+        document.getElementById(
+            "totalTransactions"
+        ).textContent =
+            allTransactionsData.length;
+
+
+        document.getElementById(
+            "systemDeposits"
+        ).textContent =
+            formatCurrency(deposits);
+
+
+        document.getElementById(
+            "systemWithdrawals"
+        ).textContent =
+            formatCurrency(withdrawals);
+    }
+
+
+    // CHANGE USD / LBP DISPLAY
+    function changeDisplayCurrency() {
+        displayCurrency =
+            document.getElementById(
+                "displayCurrency"
+            ).value;
+
+
+        localStorage.setItem(
+            "displayCurrency",
+            displayCurrency
+        );
+
+
+        // Recalculate summary display
+        updateSystemSummary();
+
+        // Redisplay currently visible transactions
+        renderTransactions(
+            displayedTransactionsData
+        );
+    }
+
+
+    // FORMAT USD OR LBP
+    function formatCurrency(amountUSD) {
+        if (displayCurrency === "LBP") {
+            const lbp =
+                amountUSD * exchangeRate;
+
+            return Math.round(lbp)
+                .toLocaleString() + " LBP";
+        }
+
+        return "$" +
+            Number(amountUSD).toFixed(2);
+    }
+
+
+    // FORMAT DATE
+    function formatDate(date) {
+        if (!date) {
+            return "-";
+        }
+
+        return new Date(date)
+            .toLocaleDateString();
+    }
+
+
+    // SECURITY HELPERS
+    function escapeHtml(value) {
+        if (
+            value === null ||
+            value === undefined
+        ) {
+            return "";
+        }
+
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+
+    function escapeJavaScript(value) {
+        return String(value)
+            .replaceAll("\\", "\\\\")
+            .replaceAll("'", "\\'");
+    }
+
+
+    // SIGN OUT
+    async function signout() {
+        const currentToken =
+            localStorage.getItem("authToken");
+
+        try {
+            await fetch(
+                "/api/v1/signout",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + currentToken
+                    }
+                }
+            );
+
+        } catch (error) {
+            console.error(error);
+        }
+
+
+        localStorage.removeItem("authToken");
+
+        window.location.replace(
+            "/api/v1/login-page"
+        );
+    }
+
+
+    // START ADMIN PAGE
+    async function initializeAdmin() {
+        const admin =
+            await verifyAdmin();
+
+        if (!admin) {
+            return;
+        }
+
+
+        await loadExchangeRate();
+
+        await loadUsers();
+
+        await loadAllTransactions();
+    }
+
+
+    initializeAdmin();
+</script>
+
+</body>
+</html>

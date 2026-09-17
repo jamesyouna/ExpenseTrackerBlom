@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker | Login</title>
+
+    <!-- AdminLTE styling -->
+    <link rel="stylesheet" th:href="@{/css/adminlte.min.css}">
+
+    <!-- Bootstrap icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class="login-page bg-body-secondary">
+
+<div class="login-box">
+
+    <!-- Page title/logo -->
+    <div class="login-logo">
+        <b>Expense</b> Tracker
+    </div>
+
+    <div class="card">
+        <div class="card-body login-card-body">
+
+            <p class="login-box-msg">Sign in to your account</p>
+
+            <!-- Login form -->
+            <form id="loginForm">
+
+                <!-- Email -->
+                <div class="input-group mb-3">
+                    <input type="email"
+                           id="email"
+                           class="form-control"
+                           placeholder="Email"
+                           required>
+
+                    <div class="input-group-text">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="input-group mb-3">
+                    <input type="password"
+                           id="password"
+                           class="form-control"
+                           placeholder="Password"
+                           required>
+
+                    <div class="input-group-text">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                </div>
+
+                <!-- Hidden until login fails (d-none = display none) -->
+                <div id="loginError" class="alert alert-danger d-none">
+                    Invalid email or password.
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </div>
+
+            </form>
+
+            <!-- Thymeleaf link to registration page -->
+            <p class="mb-0 mt-3 text-center">
+                Don't have an account?
+                <a th:href="@{/register-page}">Register</a>
+            </p>
+
+        </div>
+    </div>
+</div>
+
+<!-- AdminLTE built-in UI functionality -->
+<script th:src="@{/js/adminlte.min.js}"></script>
+
+<script>
+    // Find the login form and listen for submission
+    document.getElementById("loginForm").addEventListener("submit", async function (event) {
+
+        // Stop normal HTML form submission; JS will handle it
+        event.preventDefault();
+
+        // Read what the user entered
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        try {
+            // Send email/password to Spring Boot's /login endpoint
+            const response = await fetch("/api/v1/login", {
+                method: "POST",
+
+                // Tell Spring Boot that the request body contains JSON
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                // JS object → JSON → @RequestBody AuthModel
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+            // If Spring Boot returns an unsuccessful status, show error
+            if (!response.ok) {
+                document.getElementById("loginError").classList.remove("d-none");
+                return;
+            }
+
+            // JSON response → JavaScript object
+            const data = await response.json();
+
+            // Save returned JWT in browser storage
+            localStorage.setItem("authToken", data.jwtToken);
+
+            // Go to dashboard
+            window.location.href = "/api/v1/dashboard";
+
+        } catch (error) {
+            // Network/unexpected error
+            console.error("Login error:", error);
+            document.getElementById("loginError").classList.remove("d-none");
+        }
+    });
+</script>
+
+</body>
+</html>

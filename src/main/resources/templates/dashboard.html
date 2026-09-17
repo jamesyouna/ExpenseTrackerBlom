@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker | Dashboard</title>
+
+    <!-- AdminLTE -->
+    <link rel="stylesheet" th:href="@{/css/adminlte.min.css}">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- to fit box-->
+    <style>
+        .small-box .inner {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .small-box .inner h3 {
+            font-size: clamp(1rem, 2vw, 2rem) !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            max-width: 100%;
+            margin-right: 0;
+        }
+
+        .small-box {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+
+<div class="app-wrapper">
+
+    <!-- NAVBAR -->
+    <nav class="app-header navbar navbar-expand bg-body">
+        <div class="container-fluid">
+
+            <!-- Sidebar button -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-lte-toggle="sidebar" role="button">
+                        <i class="bi bi-list"></i>
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+
+                <!-- Currency selector -->
+                <li class="nav-item me-2">
+                    <select id="displayCurrency"
+                            class="form-select form-select-sm"
+                            onchange="changeCurrency()">
+                        <option value="USD">USD</option>
+                        <option value="LBP">LBP</option>
+                    </select>
+                </li>
+
+                <!-- Sign out -->
+                <li class="nav-item">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="signout()">
+                        <i class="bi bi-box-arrow-right"></i> Sign Out
+                    </button>
+                </li>
+
+            </ul>
+        </div>
+    </nav>
+
+
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+
+        <div class="sidebar-brand">
+            <a th:href="@{/dashboard}" class="brand-link">
+                <span class="brand-text fw-light">Expense Tracker</span>
+            </a>
+        </div>
+
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview">
+
+                    <li class="nav-item">
+                        <a th:href="@{/dashboard}" class="nav-link active">
+                            <i class="nav-icon bi bi-speedometer"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/expenses-page}" class="nav-link">
+                            <i class="nav-icon bi bi-cash-stack"></i>
+                            <p>Transactions</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/categories-page}" class="nav-link">
+                            <i class="nav-icon bi bi-tags"></i>
+                            <p>Categories</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/logistics-page}" class="nav-link">
+                            <i class="nav-icon bi bi-bar-chart-line"></i>
+                            <p>Logistics</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a th:href="@{/profile-page}" class="nav-link">
+                            <i class="nav-icon bi bi-person"></i>
+                            <p>Profile</p>
+                        </a>
+                    </li>
+
+                    <!-- Hidden unless logged-in user is ADMIN -->
+                    <li class="nav-item" id="adminMenuItem" style="display: none;">
+                        <a th:href="@{/admin-page}" class="nav-link">
+                            <i class="nav-icon bi bi-shield-lock"></i>
+                            <p>Admin Panel</p>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="app-main">
+
+        <!-- Welcome header -->
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                    <h3 class="mb-0">
+                        Welcome back, <span id="userName">User</span>
+                    </h3>
+
+                    <span id="userRole" class="badge text-bg-secondary">USER</span>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="app-content">
+            <div class="container-fluid">
+
+                <!-- FINANCIAL SUMMARY -->
+                <div class="row g-3">
+
+                    <!-- Balance -->
+                    <div class="col-12 col-sm-6 col-xl-4">
+                        <div class="small-box text-bg-primary h-100">
+                            <div class="inner">
+                                <h3 id="currentBalance">$0.00</h3>
+                                <p>Current Balance</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deposits -->
+                    <div class="col-12 col-sm-6 col-xl-4">
+                        <div class="small-box text-bg-success h-100">
+                            <div class="inner">
+                                <h3 id="totalDeposits">$0.00</h3>
+                                <p>Total Deposits</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Withdrawals -->
+                    <div class="col-12 col-sm-6 col-xl-4">
+                        <div class="small-box text-bg-danger h-100">
+                            <div class="inner">
+                                <h3 id="totalWithdrawals">$0.00</h3>
+                                <p>Total Withdrawals</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- COUNTS -->
+                <div class="row g-3 mt-1">
+
+                    <div class="col-12 col-sm-6">
+                        <div class="small-box text-bg-info h-100">
+                            <div class="inner">
+                                <h3 id="transactionCount">0</h3>
+                                <p>Number of Transactions</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6">
+                        <div class="small-box text-bg-warning h-100">
+                            <div class="inner">
+                                <h3 id="categoryCount">0</h3>
+                                <p>Categories</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- EXCHANGE RATE -->
+                <div class="alert alert-light border mt-3 mb-0">
+                    <i class="bi bi-currency-exchange"></i>
+                    Exchange Rate:
+                    <strong>
+                        1 USD = <span id="exchangeRate">Loading...</span> LBP
+                    </strong>
+                </div>
+
+
+                <!-- RECENT TRANSACTIONS -->
+                <div class="card mt-4">
+
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Transactions</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered table-striped align-middle">
+
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                                </thead>
+
+                                <!-- JavaScript fills this table -->
+                                <tbody id="recentExpenses">
+                                <tr>
+                                    <td colspan="5">Loading transactions...</td>
+                                </tr>
+                                </tbody>
+
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+
+
+<!-- AdminLTE -->
+<script th:src="@{/js/adminlte.min.js}"></script>
+
+<script>
+    // Get JWT saved during login
+    const token = localStorage.getItem("authToken");
+
+    // No JWT = return to login
+    if (!token) {
+        window.location.replace("/api/v1/login-page");
+    }
+
+
+    // Data used throughout dashboard
+    let expensesData = [];
+    let exchangeRate = 89500;
+    let displayCurrency = localStorage.getItem("displayCurrency") || "USD";
+
+    document.getElementById("displayCurrency").value = displayCurrency;
+
+
+    // fetch() wrapper that automatically adds JWT
+    async function authenticatedFetch(url, options = {}) {
+        options.headers = {
+            ...(options.headers || {}),
+            "Authorization": "Bearer " + token
+        };
+
+        const response = await fetch(url, options);
+
+        // Invalid/expired JWT
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("authToken");
+            window.location.replace("/api/v1/login-page");
+            throw new Error("Unauthorized");
+        }
+
+        return response;
+    }
+
+
+    // GET logged-in user's profile
+    async function loadProfile() {
+        try {
+            const response = await authenticatedFetch("/api/v1/profile");
+
+            if (!response.ok) {
+                return;
+            }
+
+            const user = await response.json();
+
+            document.getElementById("userName").textContent =
+                user.name || "User";
+
+            const role = user.role || "USER";
+            const roleElement = document.getElementById("userRole");
+
+            roleElement.textContent = role;
+
+            // Show Admin Panel only for ADMIN users
+            if (role === "ADMIN") {
+                roleElement.className = "badge text-bg-danger";
+
+                const adminMenuItem = document.getElementById("adminMenuItem");
+
+                if (adminMenuItem) {
+                    adminMenuItem.style.display = "block";
+                }
+
+            } else {
+                roleElement.className = "badge text-bg-secondary";
+            }
+
+        } catch (error) {
+            console.error("Profile error:", error);
+        }
+    }
+
+
+    // GET USD → LBP exchange rate
+    async function loadExchangeRate() {
+        try {
+            const response = await authenticatedFetch("/api/v1/currency/rate");
+
+            if (!response.ok) {
+                return;
+            }
+
+            exchangeRate = Number(await response.json());
+
+            document.getElementById("exchangeRate").textContent =
+                exchangeRate.toLocaleString();
+
+        } catch (error) {
+            console.error("Exchange rate error:", error);
+
+            // Display fallback rate
+            document.getElementById("exchangeRate").textContent =
+                exchangeRate.toLocaleString();
+        }
+    }
+
+
+    // CHECK ADMIN ROLE
+    async function checkAdminRole() {
+        try {
+            const response = await authenticatedFetch("/api/v1/profile");
+
+            if (!response.ok) {
+                return;
+            }
+
+            const user = await response.json();
+
+            if (user.role !== "ADMIN") {
+                document.getElementById("adminMenuItem").style.display = "none";
+            }
+
+        } catch (error) {
+            console.error("Role check error:", error);
+        }
+    }
+
+
+    // GET user's transactions
+    async function loadExpenses() {
+        try {
+            const response = await authenticatedFetch("/api/v1/expenses?size=100");
+
+            if (!response.ok) {
+                return;
+            }
+
+            expensesData = await response.json();
+
+            // Calculate and display dashboard data
+            renderExpenses();
+
+        } catch (error) {
+            console.error("Transactions error:", error);
+        }
+    }
+
+
+    // Calculate totals and display recent transactions
+    function renderExpenses() {
+
+        // Number of transactions
+        document.getElementById("transactionCount").textContent =
+            expensesData.length;
+
+        let totalDepositsUSD = 0;
+        let totalWithdrawalsUSD = 0;
+
+        // Calculate totals
+        expensesData.forEach(expense => {
+            const amount = Number(expense.amount || 0);
+
+            // Old records without type count as withdrawals
+            const type = expense.type || "WITHDRAW";
+
+            if (type === "DEPOSIT") {
+                totalDepositsUSD += amount;
+            } else {
+                totalWithdrawalsUSD += amount;
+            }
+        });
+
+        const currentBalanceUSD =
+            totalDepositsUSD - totalWithdrawalsUSD;
+
+        // Update summary cards
+        document.getElementById("currentBalance").textContent =
+            formatCurrency(currentBalanceUSD);
+
+        document.getElementById("totalDeposits").textContent =
+            formatCurrency(totalDepositsUSD);
+
+        document.getElementById("totalWithdrawals").textContent =
+            formatCurrency(totalWithdrawalsUSD);
+
+
+        // Recent transactions table
+        const table = document.getElementById("recentExpenses");
+        table.innerHTML = "";
+
+        if (expensesData.length === 0) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="5">No transactions yet.</td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Display first 5 transactions
+        expensesData.slice(0, 5).forEach(expense => {
+
+            const categoryName =
+                expense.category ? expense.category.name : "";
+
+            const type = expense.type || "WITHDRAW";
+            const isDeposit = type === "DEPOSIT";
+
+            const sign = isDeposit ? "+" : "-";
+            const amountClass = isDeposit ? "text-success" : "text-danger";
+            const badgeClass = isDeposit ? "text-bg-success" : "text-bg-danger";
+
+            table.innerHTML += `
+                <tr>
+                    <td>${escapeHtml(expense.name)}</td>
+
+                    <td>${escapeHtml(categoryName)}</td>
+
+                    <td>
+                        <span class="badge ${badgeClass}">
+                            ${type}
+                        </span>
+                    </td>
+
+                    <td class="${amountClass} fw-bold">
+                        ${sign}${formatCurrency(Number(expense.amount || 0))}
+                    </td>
+
+                    <td>${formatDate(expense.date)}</td>
+                </tr>
+            `;
+        });
+    }
+
+
+    // Change USD/LBP display
+    function changeCurrency() {
+        displayCurrency =
+            document.getElementById("displayCurrency").value;
+
+        // Remember choice in browser
+        localStorage.setItem("displayCurrency", displayCurrency);
+
+        // Re-render amounts using selected currency
+        renderExpenses();
+    }
+
+
+    // Format stored USD amount as USD or LBP
+    function formatCurrency(amountUSD) {
+        if (displayCurrency === "LBP") {
+            const lbp = amountUSD * exchangeRate;
+
+            return lbp.toLocaleString("en-US", {
+                maximumFractionDigits: 0
+            }) + " LBP";
+        }
+
+        return "$" + Number(amountUSD).toFixed(2);
+    }
+
+
+    // GET user's categories and display count
+    async function loadCategories() {
+        try {
+            const response = await authenticatedFetch("/api/v1/categories");
+
+            if (!response.ok) {
+                return;
+            }
+
+            const categories = await response.json();
+
+            document.getElementById("categoryCount").textContent =
+                categories.length;
+
+        } catch (error) {
+            console.error("Categories error:", error);
+        }
+    }
+
+
+    // Sign out and blacklist JWT
+    async function signout() {
+        const confirmed =
+            confirm("Are you sure you want to sign out?");
+
+        if (!confirmed) {
+            return;
+        }
+
+        const currentToken = localStorage.getItem("authToken");
+
+        if (!currentToken) {
+            window.location.replace("/api/v1/login-page");
+            return;
+        }
+
+        try {
+            await fetch("/api/v1/signout", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + currentToken
+                }
+            });
+
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
+
+        // Remove JWT from browser
+        localStorage.removeItem("authToken");
+        window.location.replace("/api/v1/login-page");
+    }
+
+
+    // Convert date to readable format
+    function formatDate(date) {
+        if (!date) {
+            return "";
+        }
+
+        return new Date(date).toLocaleDateString();
+    }
+
+
+    // Prevent user data from being interpreted as HTML
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+
+    // Load everything when dashboard opens
+    async function initializeDashboard() {
+        await loadExchangeRate();
+        await loadProfile();
+        await loadExpenses();
+        await loadCategories();
+        checkAdminRole();
+    }
+
+    if (token) {
+        initializeDashboard();
+    }
+</script>
+
+</body>
+</html>
